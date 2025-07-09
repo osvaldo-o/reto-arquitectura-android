@@ -1,9 +1,13 @@
 package io.devexpert.splitbill
 
+import android.graphics.Bitmap
 import android.os.Bundle
+import android.provider.MediaStore
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +53,21 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var scansLeft by remember { mutableStateOf(3) } // Cambia a 0 para probar el estado deshabilitado
     val maxScans = 5
     val isButtonEnabled = scansLeft > 0
+    
+    // Estado para almacenar la foto capturada (temporal, solo para pasarla a la IA)
+    var capturedPhoto by remember { mutableStateOf<Bitmap?>(null) }
+
+    // Launcher para capturar foto con la cámara
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        bitmap?.let {
+            capturedPhoto = it
+            // TODO: Aquí pasaremos la foto a la IA para procesar el ticket
+            // Por ahora, solo decrementamos los escaneos
+            scansLeft--
+        }
+    }
 
     Box(
         modifier = modifier
@@ -70,7 +89,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             Button(
                 onClick = {
                     if (isButtonEnabled) {
-                        scansLeft--
+                        // Lanzar la cámara
+                        cameraLauncher.launch(null)
                     }
                 },
                 enabled = isButtonEnabled,
@@ -83,6 +103,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     text = "Escanear Ticket",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
+                )
+            }
+            
+            // Mensaje temporal para mostrar que la foto fue capturada
+            capturedPhoto?.let {
+                Text(
+                    text = "¡Foto capturada! Procesando...",
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(top = 16.dp)
                 )
             }
         }
