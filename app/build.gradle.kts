@@ -52,6 +52,9 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     
+    // Navigation Compose
+    implementation("androidx.navigation:navigation-compose:2.8.4")
+    
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.ai)
