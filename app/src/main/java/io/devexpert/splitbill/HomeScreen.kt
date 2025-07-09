@@ -1,10 +1,8 @@
 package io.devexpert.splitbill
 
-import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.core.content.FileProvider
-import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -15,8 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,14 +25,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import kotlinx.coroutines.launch
-import androidx.compose.ui.platform.LocalContext
 import java.io.File
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.LaunchedEffect
 
 // El Composable principal de la pantalla de inicio
 @Composable
@@ -44,20 +44,20 @@ fun HomeScreen(
     val scanCounter = remember { ScanCounter(context) }
     val scansLeft by scanCounter.scansRemaining.collectAsState(initial = 5)
     val isButtonEnabled = scansLeft > 0
-    
+
     // Inicializar o resetear si es necesario al cargar la pantalla
     LaunchedEffect(Unit) {
         scanCounter.initializeOrResetIfNeeded()
     }
-    
+
     // Estado para almacenar la foto capturada (temporal, solo para pasarla a la IA)
     var capturedPhoto by remember { mutableStateOf<Bitmap?>(null) }
-    
+
     // Estado para mostrar el resultado del procesamiento
     var processingResult by remember { mutableStateOf<TicketData?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    
+
     // Coroutine scope para operaciones asíncronas
     val coroutineScope = rememberCoroutineScope()
     val ticketProcessor = remember { TicketProcessor(useMockData = true) }
@@ -107,61 +107,64 @@ fun HomeScreen(
         }
     }
 
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+    Scaffold { padding ->
+        Box(
+            modifier = modifier.padding(padding).fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            // Contador de escaneos
-            Text(
-                text = if (scansLeft > 0) "Te quedan $scansLeft escaneos" else "No te quedan escaneos",
-                fontSize = 18.sp,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-            // Botón principal
-            Button(
-                onClick = {
-                    if (isButtonEnabled && !isProcessing) {
-                        // Crear archivo temporal para la foto
-                        val photoFile = File.createTempFile("ticket_", ".jpg", context.cacheDir)
-                        val uri = FileProvider.getUriForFile(
-                            context,
-                            "io.devexpert.splitbill.fileprovider",
-                            photoFile
-                        )
-                        photoUri = uri
-                        cameraLauncher.launch(uri)
-                    }
-                },
-                enabled = isButtonEnabled && !isProcessing,
-                modifier = Modifier.size(width = 320.dp, height = 64.dp),
-                shape = ButtonDefaults.shape
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
+                // Contador de escaneos
                 Text(
-                    text = if (isProcessing) "Procesando..." else "Escanear Ticket",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
+                    text = if (scansLeft > 0) "Te quedan $scansLeft escaneos" else "No te quedan escaneos",
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(bottom = 32.dp)
                 )
-            }
-            
-            // Mostrar resultado del procesamiento
-            when {
-                isProcessing -> {
+                // Botón principal
+                Button(
+                    onClick = {
+                        if (isButtonEnabled && !isProcessing) {
+                            // Crear archivo temporal para la foto
+                            val photoFile = File.createTempFile("ticket_", ".jpg", context.cacheDir)
+                            val uri = FileProvider.getUriForFile(
+                                context,
+                                "io.devexpert.splitbill.fileprovider",
+                                photoFile
+                            )
+                            photoUri = uri
+                            cameraLauncher.launch(uri)
+                        }
+                    },
+                    enabled = isButtonEnabled && !isProcessing,
+                    modifier = Modifier.size(width = 320.dp, height = 64.dp),
+                    shape = ButtonDefaults.shape
+                ) {
                     Text(
-                        text = "¡Foto capturada! Procesando con IA...",
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(top = 16.dp)
+                        text = if (isProcessing) "Procesando..." else "Escanear Ticket",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-                errorMessage != null -> {
-                    Text(
-                        text = errorMessage!!,
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
+
+                // Mostrar resultado del procesamiento
+                when {
+                    isProcessing -> {
+                        Text(
+                            text = "¡Foto capturada! Procesando con IA...",
+                            fontSize = 16.sp,
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
+                    }
+
+                    errorMessage != null -> {
+                        Text(
+                            text = errorMessage!!,
+                            fontSize = 16.sp,
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
+                    }
                 }
             }
         }
