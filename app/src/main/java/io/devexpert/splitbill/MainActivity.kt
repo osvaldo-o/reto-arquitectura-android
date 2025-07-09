@@ -1,5 +1,9 @@
 package io.devexpert.splitbill
 
+import android.content.Context
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.core.content.FileProvider
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.MediaStore
@@ -33,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.devexpert.splitbill.ui.theme.SplitBillTheme
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import java.io.File
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,27 +74,45 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val coroutineScope = rememberCoroutineScope()
     val ticketProcessor = remember { TicketProcessor() }
 
-    // Launcher para capturar foto con la cámara
+    val context = LocalContext.current
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
+
+    fun resizeBitmapToMaxWidth(bitmap: Bitmap, maxWidth: Int): Bitmap {
+        if (bitmap.width <= maxWidth) return bitmap
+        val aspectRatio = bitmap.height.toFloat() / bitmap.width
+        val newWidth = maxWidth
+        val newHeight = (maxWidth * aspectRatio).toInt()
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+    }
+
+    // Launcher para capturar foto con la cámara (alta resolución)
     val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap: Bitmap? ->
-        bitmap?.let {
-            capturedPhoto = it
-            isProcessing = true
-            errorMessage = null
-            
-            // Procesar la imagen con IA
-            coroutineScope.launch {
-                ticketProcessor.processTicketImage(it)
-                    .onSuccess { ticketData ->
-                        processingResult = ticketData
-                        scansLeft--
-                        isProcessing = false
-                    }
-                    .onFailure { error ->
-                        errorMessage = "Error procesando ticket: ${error.message}"
-                        isProcessing = false
-                    }
+        contract = ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        if (success && photoUri != null) {
+            val inputStream = context.contentResolver.openInputStream(photoUri!!)
+            val bitmap = inputStream?.use { BitmapFactory.decodeStream(it) }
+            if (bitmap != null) {
+                // Redimensionar antes de procesar
+                val resizedBitmap = resizeBitmapToMaxWidth(bitmap, 1280)
+                capturedPhoto = resizedBitmap
+                isProcessing = true
+                errorMessage = null
+                // Procesar la imagen con IA
+                coroutineScope.launch {
+                    ticketProcessor.processTicketImage(resizedBitmap)
+                        .onSuccess { ticketData ->
+                            processingResult = ticketData
+                            scansLeft--
+                            isProcessing = false
+                        }
+                        .onFailure { error ->
+                            errorMessage = "Error procesando ticket: ${error.message}"
+                            isProcessing = false
+                        }
+                }
+            } else {
+                errorMessage = "No se pudo leer la imagen"
             }
         }
     }
@@ -113,8 +137,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             Button(
                 onClick = {
                     if (isButtonEnabled && !isProcessing) {
-                        // Lanzar la cámara
-                        cameraLauncher.launch(null)
+                        // Crear archivo temporal para la foto
+                        val photoFile = File.createTempFile("ticket_", ".jpg", context.cacheDir)
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "io.devexpert.splitbill.fileprovider",
+                            photoFile
+                        )
+                        photoUri = uri
+                        cameraLauncher.launch(uri)
                     }
                 },
                 enabled = isButtonEnabled && !isProcessing,
