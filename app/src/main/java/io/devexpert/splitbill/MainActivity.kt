@@ -39,6 +39,8 @@ import io.devexpert.splitbill.ui.theme.SplitBillTheme
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import java.io.File
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,10 +59,16 @@ class MainActivity : ComponentActivity() {
 // El Composable principal de la pantalla de inicio
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
-    // Variable local para los escaneos restantes
-    var scansLeft by remember { mutableStateOf(3) } // Cambia a 0 para probar el estado deshabilitado
-    val maxScans = 5
+    // Variable local para los escaneos restantes (ahora desde DataStore)
+    val context = LocalContext.current
+    val scanCounter = remember { ScanCounter(context) }
+    val scansLeft by scanCounter.scansRemaining.collectAsState(initial = 5)
     val isButtonEnabled = scansLeft > 0
+    
+    // Inicializar o resetear si es necesario al cargar la pantalla
+    LaunchedEffect(Unit) {
+        scanCounter.initializeOrResetIfNeeded()
+    }
     
     // Estado para almacenar la foto capturada (temporal, solo para pasarla a la IA)
     var capturedPhoto by remember { mutableStateOf<Bitmap?>(null) }
@@ -74,7 +82,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val coroutineScope = rememberCoroutineScope()
     val ticketProcessor = remember { TicketProcessor() }
 
-    val context = LocalContext.current
     var photoUri by remember { mutableStateOf<Uri?>(null) }
 
     fun resizeBitmapToMaxWidth(bitmap: Bitmap, maxWidth: Int): Bitmap {
@@ -103,7 +110,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     ticketProcessor.processTicketImage(resizedBitmap)
                         .onSuccess { ticketData ->
                             processingResult = ticketData
-                            scansLeft--
+                            // Decrementar el contador solo si el procesamiento fue exitoso
+                            scanCounter.decrementScan()
                             isProcessing = false
                         }
                         .onFailure { error ->
