@@ -53,7 +53,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF10120E)), // Fondo oscuro minimalista
+            , // Fondo por defecto del tema
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -63,7 +63,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             // Contador de escaneos
             Text(
                 text = if (scansLeft > 0) "Te quedan $scansLeft escaneos" else "No te quedan escaneos",
-                color = Color(0xFFBFC6D0),
                 fontSize = 18.sp,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
@@ -77,12 +76,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 enabled = isButtonEnabled,
                 modifier = Modifier
                     .size(width = 320.dp, height = 64.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isButtonEnabled) Color(0xFF38E54D) else Color(0xFF23272F),
-                    contentColor = Color.Black,
-                    disabledContainerColor = Color(0xFF23272F),
-                    disabledContentColor = Color(0xFFBFC6D0)
-                ),
+                // Colores por defecto del tema
                 shape = ButtonDefaults.shape
             ) {
                 Text(
