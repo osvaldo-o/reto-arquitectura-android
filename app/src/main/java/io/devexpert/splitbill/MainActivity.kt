@@ -80,7 +80,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     
     // Coroutine scope para operaciones asíncronas
     val coroutineScope = rememberCoroutineScope()
-    val ticketProcessor = remember { TicketProcessor() }
+    val ticketProcessor = remember { TicketProcessor(useMockData = true) }
 
     var photoUri by remember { mutableStateOf<Uri?>(null) }
 
