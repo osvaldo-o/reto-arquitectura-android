@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.devexpert.splitbill.ui.theme.SplitBillTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,6 +58,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     
     // Estado para almacenar la foto capturada (temporal, solo para pasarla a la IA)
     var capturedPhoto by remember { mutableStateOf<Bitmap?>(null) }
+    
+    // Estado para mostrar el resultado del procesamiento
+    var processingResult by remember { mutableStateOf<TicketData?>(null) }
+    var isProcessing by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    // Coroutine scope para operaciones asíncronas
+    val coroutineScope = rememberCoroutineScope()
+    val ticketProcessor = remember { TicketProcessor() }
 
     // Launcher para capturar foto con la cámara
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -63,9 +74,22 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     ) { bitmap: Bitmap? ->
         bitmap?.let {
             capturedPhoto = it
-            // TODO: Aquí pasaremos la foto a la IA para procesar el ticket
-            // Por ahora, solo decrementamos los escaneos
-            scansLeft--
+            isProcessing = true
+            errorMessage = null
+            
+            // Procesar la imagen con IA
+            coroutineScope.launch {
+                ticketProcessor.processTicketImage(it)
+                    .onSuccess { ticketData ->
+                        processingResult = ticketData
+                        scansLeft--
+                        isProcessing = false
+                    }
+                    .onFailure { error ->
+                        errorMessage = "Error procesando ticket: ${error.message}"
+                        isProcessing = false
+                    }
+            }
         }
     }
 
@@ -88,31 +112,52 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             // Botón principal
             Button(
                 onClick = {
-                    if (isButtonEnabled) {
+                    if (isButtonEnabled && !isProcessing) {
                         // Lanzar la cámara
                         cameraLauncher.launch(null)
                     }
                 },
-                enabled = isButtonEnabled,
+                enabled = isButtonEnabled && !isProcessing,
                 modifier = Modifier
                     .size(width = 320.dp, height = 64.dp),
                 // Colores por defecto del tema
                 shape = ButtonDefaults.shape
             ) {
                 Text(
-                    text = "Escanear Ticket",
+                    text = if (isProcessing) "Procesando..." else "Escanear Ticket",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
             
-            // Mensaje temporal para mostrar que la foto fue capturada
-            capturedPhoto?.let {
-                Text(
-                    text = "¡Foto capturada! Procesando...",
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
+            // Mostrar resultado del procesamiento
+            when {
+                isProcessing -> {
+                    Text(
+                        text = "¡Foto capturada! Procesando con IA...",
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                }
+                errorMessage != null -> {
+                    Text(
+                        text = errorMessage!!,
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                }
+                processingResult != null -> {
+                    Text(
+                        text = "¡Ticket procesado! Total: €${processingResult!!.total}",
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                    Text(
+                        text = "${processingResult!!.items.size} items encontrados",
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
             }
         }
     }
