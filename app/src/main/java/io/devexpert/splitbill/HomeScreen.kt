@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -97,12 +98,12 @@ fun HomeScreen(
                             onTicketProcessed(ticketData)
                         }
                         .onFailure { error ->
-                            errorMessage = "Error procesando ticket: ${error.message}"
+                            errorMessage = context.getString(R.string.error_processing_ticket, error.message ?: "")
                             isProcessing = false
                         }
                 }
             } else {
-                errorMessage = "No se pudo leer la imagen"
+                errorMessage = context.getString(R.string.could_not_read_image)
             }
         }
     }
@@ -118,7 +119,10 @@ fun HomeScreen(
             ) {
                 // Contador de escaneos
                 Text(
-                    text = if (scansLeft > 0) "Te quedan $scansLeft escaneos" else "No te quedan escaneos",
+                    text = if (scansLeft > 0) 
+                        stringResource(R.string.scans_remaining, scansLeft) 
+                    else 
+                        stringResource(R.string.no_scans_remaining),
                     fontSize = 18.sp,
                     modifier = Modifier.padding(bottom = 32.dp)
                 )
@@ -142,7 +146,10 @@ fun HomeScreen(
                     shape = ButtonDefaults.shape
                 ) {
                     Text(
-                        text = if (isProcessing) "Procesando..." else "Escanear Ticket",
+                        text = if (isProcessing) 
+                            stringResource(R.string.processing) 
+                        else 
+                            stringResource(R.string.scan_ticket),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -152,7 +159,7 @@ fun HomeScreen(
                 when {
                     isProcessing -> {
                         Text(
-                            text = "¡Foto capturada! Procesando con IA...",
+                            text = stringResource(R.string.photo_captured_processing),
                             fontSize = 16.sp,
                             modifier = Modifier.padding(top = 16.dp)
                         )

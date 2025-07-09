@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -34,12 +35,12 @@ fun ReceiptScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "No hay datos del ticket",
+                text = stringResource(R.string.no_ticket_data),
                 fontSize = 18.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             Button(onClick = onBackPressed) {
-                Text("Volver")
+                Text(stringResource(R.string.back))
             }
         }
         return
@@ -74,12 +75,12 @@ fun ReceiptScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Receipt") },
+                title = { Text(text = stringResource(R.string.receipt)) },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 }
@@ -142,7 +143,7 @@ fun ReceiptScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Total Seleccionado",
+                            text = stringResource(R.string.selected_total),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -175,7 +176,7 @@ fun ReceiptScreen(
                         )
                     ) {
                         Text(
-                            text = "Marcar como Pagado",
+                            text = stringResource(R.string.mark_as_paid),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -236,7 +237,7 @@ fun SelectableTicketItemCard(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "€${String.format("%.2f", item.price)} cada uno",
+                    text = "€${String.format("%.2f", item.price)} ${stringResource(R.string.each)}",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -266,7 +267,7 @@ fun SelectableTicketItemCard(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Remove,
-                            contentDescription = "Reducir cantidad"
+                            contentDescription = stringResource(R.string.reduce_quantity)
                         )
                     }
 
@@ -287,7 +288,7 @@ fun SelectableTicketItemCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Aumentar cantidad"
+                            contentDescription = stringResource(R.string.increase_quantity)
                         )
                     }
                 }
@@ -350,7 +351,7 @@ fun PaidTicketItemCard(
                     textDecoration = TextDecoration.LineThrough
                 )
                 Text(
-                    text = "€${String.format("%.2f", item.price)} cada uno",
+                    text = "€${String.format("%.2f", item.price)} ${stringResource(R.string.each)}",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textDecoration = TextDecoration.LineThrough
