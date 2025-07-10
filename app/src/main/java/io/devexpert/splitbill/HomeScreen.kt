@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.launch
 import java.io.File
+import io.devexpert.splitbill.BuildConfig
 
 // El Composable principal de la pantalla de inicio
 @Composable
@@ -61,7 +62,7 @@ fun HomeScreen(
 
     // Coroutine scope para operaciones asíncronas
     val coroutineScope = rememberCoroutineScope()
-    val ticketProcessor = remember { TicketProcessor(useMockData = true) }
+    val ticketProcessor = remember { TicketProcessor(useMockData = BuildConfig.DEBUG) }
 
     var photoUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -98,7 +99,10 @@ fun HomeScreen(
                             onTicketProcessed(ticketData)
                         }
                         .onFailure { error ->
-                            errorMessage = context.getString(R.string.error_processing_ticket, error.message ?: "")
+                            errorMessage = context.getString(
+                                R.string.error_processing_ticket,
+                                error.message ?: ""
+                            )
                             isProcessing = false
                         }
                 }
@@ -110,7 +114,9 @@ fun HomeScreen(
 
     Scaffold { padding ->
         Box(
-            modifier = modifier.padding(padding).fillMaxSize(),
+            modifier = modifier
+                .padding(padding)
+                .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -119,9 +125,9 @@ fun HomeScreen(
             ) {
                 // Contador de escaneos
                 Text(
-                    text = if (scansLeft > 0) 
-                        stringResource(R.string.scans_remaining, scansLeft) 
-                    else 
+                    text = if (scansLeft > 0)
+                        stringResource(R.string.scans_remaining, scansLeft)
+                    else
                         stringResource(R.string.no_scans_remaining),
                     fontSize = 18.sp,
                     modifier = Modifier.padding(bottom = 32.dp)
@@ -146,9 +152,9 @@ fun HomeScreen(
                     shape = ButtonDefaults.shape
                 ) {
                     Text(
-                        text = if (isProcessing) 
-                            stringResource(R.string.processing) 
-                        else 
+                        text = if (isProcessing)
+                            stringResource(R.string.processing)
+                        else
                             stringResource(R.string.scan_ticket),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
