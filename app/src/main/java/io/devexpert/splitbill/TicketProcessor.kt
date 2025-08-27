@@ -208,4 +208,4 @@ class TicketProcessor(private val useMockData: Boolean = false) {
             Result.failure(e)
         }
     }
-} 
+}

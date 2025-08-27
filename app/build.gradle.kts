@@ -67,6 +67,9 @@ dependencies {
     
     // DataStore
     implementation(libs.androidx.datastore.preferences)
+
+    // Android Camara X
+    implementation(libs.androidx.camare.core)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
