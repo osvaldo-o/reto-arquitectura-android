@@ -1,4 +1,4 @@
-package io.devexpert.splitbill.data
+package io.devexpert.splitbill.data.datasource.ticket
 
 import android.graphics.Bitmap
 import com.google.firebase.Firebase
@@ -7,6 +7,7 @@ import com.google.firebase.ai.type.Schema
 import com.google.firebase.ai.type.content
 import com.google.firebase.ai.type.generationConfig
 import io.devexpert.splitbill.TicketData
+import io.devexpert.splitbill.data.datasource.ticket.TicketDataSource
 import kotlinx.serialization.json.Json
 
 class MLKitTicketDataSource : TicketDataSource {
@@ -14,18 +15,18 @@ class MLKitTicketDataSource : TicketDataSource {
     private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun processTicket(image: Bitmap): TicketData {
-        val jsonSchema = Schema.obj(
+        val jsonSchema = Schema.Companion.obj(
             mapOf(
-                "items" to Schema.array(
-                    Schema.obj(
+                "items" to Schema.Companion.array(
+                    Schema.Companion.obj(
                         mapOf(
-                            "name" to Schema.string(),
-                            "count" to Schema.integer(),
-                            "price_per_unit" to Schema.double()
+                            "name" to Schema.Companion.string(),
+                            "count" to Schema.Companion.integer(),
+                            "price_per_unit" to Schema.Companion.double()
                         )
                     )
                 ),
-                "total" to Schema.double()
+                "total" to Schema.Companion.double()
             )
         )
 

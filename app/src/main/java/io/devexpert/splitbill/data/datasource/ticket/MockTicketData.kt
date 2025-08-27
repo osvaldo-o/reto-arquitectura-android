@@ -1,4 +1,4 @@
-package io.devexpert.splitbill.data
+package io.devexpert.splitbill.data.datasource.ticket
 
 import io.devexpert.splitbill.TicketData
 import kotlinx.serialization.json.Json

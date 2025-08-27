@@ -1,7 +1,8 @@
-package io.devexpert.splitbill.data
+package io.devexpert.splitbill.data.repository
 
 import android.graphics.Bitmap
 import io.devexpert.splitbill.TicketData
+import io.devexpert.splitbill.data.datasource.ticket.TicketDataSource
 
 class TicketRepository(
     private val ticketDataSource: TicketDataSource

@@ -1,4 +1,4 @@
-package io.devexpert.splitbill.data
+package io.devexpert.splitbill.data.datasource.ticket
 
 import android.graphics.Bitmap
 import io.devexpert.splitbill.TicketData
