@@ -1,20 +1,18 @@
 package io.devexpert.splitbill.data.datasource.ticket
 
-import android.graphics.Bitmap
 import com.google.firebase.Firebase
 import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.Schema
 import com.google.firebase.ai.type.content
 import com.google.firebase.ai.type.generationConfig
 import io.devexpert.splitbill.TicketData
-import io.devexpert.splitbill.data.datasource.ticket.TicketDataSource
 import kotlinx.serialization.json.Json
 
 class MLKitTicketDataSource : TicketDataSource {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    override suspend fun processTicket(image: Bitmap): TicketData {
+    override suspend fun processTicket(image: ByteArray): TicketData {
         val jsonSchema = Schema.Companion.obj(
             mapOf(
                 "items" to Schema.Companion.array(
@@ -38,7 +36,7 @@ class MLKitTicketDataSource : TicketDataSource {
         """.trimIndent()
 
         val inputContent = content {
-            image(image)
+            inlineData(image, "image/jpeg")
             text(prompt)
         }
 

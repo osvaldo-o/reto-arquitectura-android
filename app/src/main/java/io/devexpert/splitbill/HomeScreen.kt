@@ -34,6 +34,7 @@ import androidx.core.content.FileProvider
 import kotlinx.coroutines.launch
 import java.io.File
 import androidx.core.graphics.scale
+import io.devexpert.splitbill.utils.ImageConverter
 
 // El Composable principal de la pantalla de inicio
 @Composable
@@ -80,6 +81,7 @@ fun HomeScreen(
                 val resizedBitmap = resizeBitmapToMaxWidth(bitmap, 1280)
                 isProcessing = true
                 errorMessage = null
+                val imageByteArray = ImageConverter.toResizedByteArray(bitmap)
                 // Procesar la imagen con IA
                 coroutineScope.launch {
                     ticketProcessor.processTicketImage(resizedBitmap)
