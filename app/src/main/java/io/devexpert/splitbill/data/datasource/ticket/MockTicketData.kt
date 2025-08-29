@@ -1,6 +1,6 @@
 package io.devexpert.splitbill.data.datasource.ticket
 
-import io.devexpert.splitbill.TicketData
+import io.devexpert.splitbill.domain.model.TicketData
 import kotlinx.serialization.json.Json
 
 object MockTicketData {

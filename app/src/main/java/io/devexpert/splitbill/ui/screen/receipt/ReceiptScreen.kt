@@ -1,4 +1,4 @@
-package io.devexpert.splitbill
+package io.devexpert.splitbill.ui.screen.receipt
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,17 +17,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.devexpert.splitbill.R
+import io.devexpert.splitbill.domain.model.TicketItem
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReceiptScreen(
+    uiState: ReceiptUiState,
+    onQuantityChange: (TicketItem, Int) -> Unit,
+    onMarkAsPaid: () -> Unit,
     onBackPressed: () -> Unit
 ) {
-    val ticketData = remember { TicketDataHolder.getTicketData() }
 
-    if (ticketData == null) {
-        // Si no hay datos, mostrar error y botón para volver
+    if (uiState.ticketData == null) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -46,32 +49,6 @@ fun ReceiptScreen(
         }
         return
     }
-
-    // Estados para manejar las cantidades seleccionadas y items pagados
-    var selectedQuantities by remember {
-        mutableStateOf(ticketData.items.associateWith { item -> 0 })
-    }
-    var paidQuantities by remember {
-        mutableStateOf(ticketData.items.associateWith { item -> 0 })
-    }
-
-    // Calcular total seleccionado
-    val selectedTotal = selectedQuantities.entries.sumOf { (item, quantity) ->
-        item.price * quantity
-    }
-
-    // Calcular items disponibles (no pagados)
-    val availableItems = ticketData.items.map { item ->
-        val paidQty = paidQuantities[item] ?: 0
-        val availableQty = item.quantity - paidQty
-        item to availableQty
-    }.filter { it.second > 0 }
-
-    // Items pagados
-    val paidItems = ticketData.items.map { item ->
-        val paidQty = paidQuantities[item] ?: 0
-        item to paidQty
-    }.filter { it.second > 0 }
 
     Scaffold(
         topBar = {
@@ -100,24 +77,20 @@ fun ReceiptScreen(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Items disponibles
-            items(availableItems) { (item, availableQty) ->
-                val selectedQty = selectedQuantities[item] ?: 0
+            items(uiState.availableItems) { (item, availableQty) ->
+                val selectedQty = uiState.selectedQuantities[item] ?: 0
 
                 SelectableTicketItemCard(
                     item = item,
                     availableQuantity = availableQty,
                     selectedQuantity = selectedQty,
                     onQuantityChange = { newQty ->
-                        selectedQuantities = selectedQuantities.toMutableMap().apply {
-                            this[item] = newQty
-                        }
+                        onQuantityChange(item, newQty)
                     }
                 )
             }
 
-            // Items pagados (tachados)
-            items(paidItems) { (item, paidQty) ->
+            items(uiState.paidItems) { (item, paidQty) ->
                 PaidTicketItemCard(
                     item = item,
                     paidQuantity = paidQty
@@ -125,8 +98,7 @@ fun ReceiptScreen(
             }
         }
 
-        // Total seleccionado y botón de pagar
-        if (selectedTotal > 0) {
+        if (uiState.selectedTotal > 0) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Card(
@@ -149,7 +121,7 @@ fun ReceiptScreen(
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "€${String.format(Locale.getDefault(),"%.2f", selectedTotal)}",
+                            text = "€${String.format(Locale.getDefault(),"%.2f", uiState.selectedTotal)}",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -159,18 +131,7 @@ fun ReceiptScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Button(
-                        onClick = {
-                            // Marcar como pagado
-                            paidQuantities = paidQuantities.toMutableMap().apply {
-                                selectedQuantities.forEach { (item, selectedQty) ->
-                                    if (selectedQty > 0) {
-                                        this[item] = (this[item] ?: 0) + selectedQty
-                                    }
-                                }
-                            }
-                            // Limpiar selección
-                            selectedQuantities = selectedQuantities.mapValues { 0 }
-                        },
+                        onClick = onMarkAsPaid,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF4CAF50) // Verde
@@ -238,7 +199,8 @@ fun SelectableTicketItemCard(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "€${String.format(Locale.getDefault(),"%.2f", item.price)} ${stringResource(R.string.each)}",
+                    text = "€${String.format(Locale.getDefault(),"%.2f", item.price)} ${stringResource(
+                        R.string.each)}",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -352,7 +314,8 @@ fun PaidTicketItemCard(
                     textDecoration = TextDecoration.LineThrough
                 )
                 Text(
-                    text = "€${String.format(Locale.getDefault(),"%.2f", item.price)} ${stringResource(R.string.each)}",
+                    text = "€${String.format(Locale.getDefault(),"%.2f", item.price)} ${stringResource(
+                        R.string.each)}",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textDecoration = TextDecoration.LineThrough

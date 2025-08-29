@@ -1,6 +1,6 @@
 package io.devexpert.splitbill.domain.usecase
 
-import io.devexpert.splitbill.TicketData
+import io.devexpert.splitbill.domain.model.TicketData
 import io.devexpert.splitbill.data.repository.ScanCounterRepository
 import io.devexpert.splitbill.data.repository.TicketRepository
 
@@ -10,7 +10,7 @@ class ProcessTicketUseCase(
 ) {
 
     suspend operator fun invoke(image: ByteArray): TicketData {
-        val result = ticketRepository.getTicket(image)
+        val result = ticketRepository.processTicket(image)
         scanCounterRepository.decrementScan()
         return result
     }
