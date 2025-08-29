@@ -10,15 +10,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import io.devexpert.splitbill.data.datasource.scan.ScanCounterDataSourceImpl
-import io.devexpert.splitbill.data.datasource.ticket.MLKitTicketDataSource
-import io.devexpert.splitbill.data.datasource.ticket.MockTicketDataSource
-import io.devexpert.splitbill.data.repository.ScanCounterRepository
-import io.devexpert.splitbill.data.repository.TicketRepository
-import io.devexpert.splitbill.domain.usecase.GetScansReminingUseCase
-import io.devexpert.splitbill.domain.usecase.GetTicketUseCase
-import io.devexpert.splitbill.domain.usecase.InitializeOrResetScanCounterUseCase
-import io.devexpert.splitbill.domain.usecase.ProcessTicketUseCase
+import io.devexpert.splitbill.di.AppModule
 import io.devexpert.splitbill.ui.screen.home.HomeScreen
 import io.devexpert.splitbill.ui.screen.home.HomeViewModel
 import io.devexpert.splitbill.ui.screen.receipt.ReceiptScreen
@@ -29,12 +21,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        AppModule.initialize(this)
         setContent {
             SplitBillTheme {
                 val navController = rememberNavController()
-                val scanCounterRepository = ScanCounterRepository(ScanCounterDataSourceImpl(this))
-                val ticketDataSource = if (BuildConfig.DEBUG) MockTicketDataSource() else MLKitTicketDataSource()
-                val ticketRepository = TicketRepository(ticketDataSource)
                 NavHost(
                     navController = navController,
                     startDestination = "home"
@@ -42,10 +32,10 @@ class MainActivity : ComponentActivity() {
                     composable("home") {
                         val viewModel: HomeViewModel = viewModel {
                             HomeViewModel(
-                                InitializeOrResetScanCounterUseCase(scanCounterRepository),
-                                GetScansReminingUseCase(scanCounterRepository),
-                                ProcessTicketUseCase(ticketRepository, scanCounterRepository),
-                                this@MainActivity
+                                AppModule.initializeOrResetScanCounterUseCase,
+                                AppModule.getScansReminingUseCase,
+                                AppModule.decrementScanUseCase,
+                                AppModule.processTicketUseCase
                             )
                         }
                         val homeUiState by viewModel.homeUiState.collectAsStateWithLifecycle()
@@ -61,9 +51,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("receipt") {
-                        val viewModel: ReceiptViewModel = viewModel {
-                            ReceiptViewModel(GetTicketUseCase(ticketRepository))
-                        }
+                        val viewModel: ReceiptViewModel = viewModel { ReceiptViewModel(AppModule.getTicketUseCase) }
                         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                         ReceiptScreen(
                             uiState = uiState,

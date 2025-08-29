@@ -1,11 +1,10 @@
 package io.devexpert.splitbill.ui.screen.home
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.devexpert.splitbill.R
+import io.devexpert.splitbill.domain.usecase.DecrementScanUseCase
 import io.devexpert.splitbill.domain.usecase.GetScansReminingUseCase
 import io.devexpert.splitbill.domain.usecase.InitializeOrResetScanCounterUseCase
 import io.devexpert.splitbill.domain.usecase.ProcessTicketUseCase
@@ -20,8 +19,8 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val initializeOrResetScanCounterUseCase: InitializeOrResetScanCounterUseCase,
     private val getScansReminingUseCase: GetScansReminingUseCase,
-    private val processTicketUseCase: ProcessTicketUseCase,
-    private val context: Context
+    private val decrementScanUseCase: DecrementScanUseCase,
+    private val processTicketUseCase: ProcessTicketUseCase
 ): ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -45,11 +44,12 @@ class HomeViewModel(
             val imageByteArray = ImageConverter.toResizedByteArray(bitmap)
             try {
                 processTicketUseCase.invoke(imageByteArray)
+                decrementScanUseCase.invoke()
                 setIsProcessing(false)
                 onSuccess()
             } catch (e: Exception) {
                 Log.e("Error", e.toString())
-                setErrorMessage(context.getString(R.string.error_processing_ticket, e))
+                setErrorMessage("Error processing ticket: $e")
                 setIsProcessing(false)
             }
 
